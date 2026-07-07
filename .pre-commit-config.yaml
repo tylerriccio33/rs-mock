@@ -1,0 +1,46 @@
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: local
+    hooks:
+      - id: commit-msg-prefix
+        name: enforce commit message prefix
+        entry: uv run python scripts/check_commit_msg.py
+        language: system
+        stages: [commit-msg]
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: pyrefly
+        name: pyrefly check
+        entry: uv run pyrefly check
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: pytest-quick
+        name: pytest (quick)
+        entry: uv run pytest
+        args:
+          - -x # stop on first failure
+          - --tb=short
+          - -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+ci:
+  # mutation testing (and the full suite it depends on) is too slow for pre-commit.ci
+  skip: [pytest-quick]

@@ -35,8 +35,7 @@ def test_join(mock: RedshiftMock) -> None:
 
 def test_cte(mock: RedshiftMock) -> None:
     rows = mock.execute(
-        "WITH nums AS (SELECT 1 AS n UNION ALL SELECT 2) "
-        "SELECT SUM(n) FROM nums"
+        "WITH nums AS (SELECT 1 AS n UNION ALL SELECT 2) SELECT SUM(n) FROM nums"
     ).fetchall()
     assert rows == [(3,)]
 
