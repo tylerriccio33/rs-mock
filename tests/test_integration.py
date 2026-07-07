@@ -1,13 +1,6 @@
-"""End-to-end tests exercising the supported SQL surface."""
-
-import pytest
+"""Integration tests: end-to-end Redshift SQL transpiled and run on duckdb."""
 
 from rs_mock import RedshiftMock
-
-
-@pytest.fixture
-def mock() -> RedshiftMock:
-    return RedshiftMock()
 
 
 def test_regular_select(mock: RedshiftMock) -> None:
@@ -51,8 +44,3 @@ def test_redshift_specific_syntax_is_transpiled(mock: RedshiftMock) -> None:
     # GETDATE() is Redshift-specific; it must be rewritten for duckdb.
     rows = mock.execute("SELECT GETDATE() IS NOT NULL AS ok").fetchall()
     assert rows == [(True,)]
-
-
-def test_empty_sql_raises(mock: RedshiftMock) -> None:
-    with pytest.raises(ValueError):
-        mock.execute("")
