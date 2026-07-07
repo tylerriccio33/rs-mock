@@ -1,7 +1,7 @@
 [project]
 name = "rs-mock"
 version = "0.1.0"
-description = "Add your description here"
+description = "Mock Redshift locally by transpiling Redshift SQL to DuckDB and running it."
 readme = "README.md"
 authors = [
     { name = "Tyler Riccio", email = "tylerriccio8@gmail.com" }
