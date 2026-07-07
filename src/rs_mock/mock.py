@@ -41,7 +41,9 @@ class RedshiftMock:
         # `transpile` splits multi-statement input and parses with the redshift
         # dialect; blank input transpiles to a single empty string, so filter
         # those out. Executing nothing is a user error.
-        statements = [s for s in sqlglot.transpile(sql, read="redshift", write="duckdb") if s]
+        statements = [
+            s for s in sqlglot.transpile(sql, read="redshift", write="duckdb") if s
+        ]
         if not statements:
             raise ValueError("no SQL statement to execute")
 

@@ -64,8 +64,12 @@ UNSUPPORTED_FUNCTIONS = {
 }
 
 
-@pytest.mark.xfail(reason="Unsupported-function detection is not implemented", strict=True)
-@pytest.mark.parametrize("sql", UNSUPPORTED_FUNCTIONS.values(), ids=UNSUPPORTED_FUNCTIONS.keys())
+@pytest.mark.xfail(
+    reason="Unsupported-function detection is not implemented", strict=True
+)
+@pytest.mark.parametrize(
+    "sql", UNSUPPORTED_FUNCTIONS.values(), ids=UNSUPPORTED_FUNCTIONS.keys()
+)
 def test_unsupported_function_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)
@@ -96,8 +100,12 @@ UNSUPPORTED_DATATYPES = {
 }
 
 
-@pytest.mark.xfail(reason="Unsupported-data-type detection is not implemented", strict=True)
-@pytest.mark.parametrize("sql", UNSUPPORTED_DATATYPES.values(), ids=UNSUPPORTED_DATATYPES.keys())
+@pytest.mark.xfail(
+    reason="Unsupported-data-type detection is not implemented", strict=True
+)
+@pytest.mark.parametrize(
+    "sql", UNSUPPORTED_DATATYPES.values(), ids=UNSUPPORTED_DATATYPES.keys()
+)
 def test_unsupported_datatype_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)
@@ -112,7 +120,7 @@ UNSUPPORTED_FEATURES = {
     "inheritance": "CREATE TABLE child () INHERITS (parent)",
     "index": "CREATE INDEX idx ON t (id)",
     "nulls_clause_window": "SELECT LAG(id) IGNORE NULLS OVER (ORDER BY id) FROM t",
-    "collation": "CREATE TABLE t (c VARCHAR COLLATE \"en_US\")",
+    "collation": 'CREATE TABLE t (c VARCHAR COLLATE "en_US")',
     "array_constructor": "SELECT ARRAY[1, 2, 3]",
     "row_constructor": "SELECT ROW(1, 2)",
     "trigger": "CREATE TRIGGER trg AFTER INSERT ON t EXECUTE PROCEDURE f()",
@@ -122,8 +130,12 @@ UNSUPPORTED_FEATURES = {
 }
 
 
-@pytest.mark.xfail(reason="Unsupported-feature detection is not implemented", strict=True)
-@pytest.mark.parametrize("sql", UNSUPPORTED_FEATURES.values(), ids=UNSUPPORTED_FEATURES.keys())
+@pytest.mark.xfail(
+    reason="Unsupported-feature detection is not implemented", strict=True
+)
+@pytest.mark.parametrize(
+    "sql", UNSUPPORTED_FEATURES.values(), ids=UNSUPPORTED_FEATURES.keys()
+)
 def test_unsupported_feature_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)

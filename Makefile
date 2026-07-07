@@ -9,3 +9,6 @@ lint:
 
 prek:
 	uv run prek run --all-files
+
+prek-install:
+	uv run prek install
