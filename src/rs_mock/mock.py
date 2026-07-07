@@ -6,6 +6,15 @@ import duckdb
 import sqlglot
 
 
+class UnimplementedPostgresFeature(Exception):
+    """Raised when SQL uses a PostgreSQL construct that Redshift does not support.
+
+    Redshift excludes many PostgreSQL functions, data types, and features (see the
+    AWS "Unsupported PostgreSQL ..." docs). Since this mock stands in for Redshift,
+    such SQL must fail loudly here rather than silently succeed on duckdb.
+    """
+
+
 class RedshiftMock:
     """An in-process stand-in for Redshift.
 
