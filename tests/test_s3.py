@@ -123,3 +123,44 @@ def test_copy_from_empty_prefix_loads_nothing(rs: RedshiftMock) -> None:
     rs.execute("CREATE TABLE loaded (id INT, name VARCHAR)")
     rs.execute(f"COPY loaded FROM 's3://{BUCKET}/nothing/' IAM_ROLE 'arn:...'")
     assert rs.execute("SELECT count(*) FROM loaded").fetchall() == [(0,)]
+
+
+def test_unload_parallel_off_writes_single_object_with_no_suffix(
+    rs: RedshiftMock, s3: object
+) -> None:
+    rs.execute(
+        "UNLOAD ('select id, name from users order by id') "
+        f"TO 's3://{BUCKET}/single/out' IAM_ROLE 'arn:...' PARALLEL OFF"
+    )
+    assert _keys(s3, "single/") == ["single/out"]
+
+
+def test_unload_parallel_on_is_the_default(rs: RedshiftMock, s3: object) -> None:
+    rs.execute(
+        "UNLOAD ('select id, name from users order by id') "
+        f"TO 's3://{BUCKET}/par/out_' IAM_ROLE 'arn:...'"
+    )
+    assert _keys(s3, "par/") == ["par/out_000"]
+
+
+def test_unload_errors_on_existing_target_without_allowoverwrite(
+    rs: RedshiftMock, s3: object
+) -> None:
+    s3.put_object(Bucket=BUCKET, Key="dup/out000", Body=b"stale")
+    with pytest.raises(RuntimeError, match="ALLOWOVERWRITE"):
+        rs.execute(
+            "UNLOAD ('select id, name from users order by id') "
+            f"TO 's3://{BUCKET}/dup/out' IAM_ROLE 'arn:...'"
+        )
+
+
+def test_unload_allowoverwrite_replaces_existing_target(
+    rs: RedshiftMock, s3: object
+) -> None:
+    s3.put_object(Bucket=BUCKET, Key="over/out000", Body=b"stale")
+    rs.execute(
+        "UNLOAD ('select id, name from users order by id') "
+        f"TO 's3://{BUCKET}/over/out' IAM_ROLE 'arn:...' ALLOWOVERWRITE"
+    )
+    body = s3.get_object(Bucket=BUCKET, Key="over/out000")["Body"].read()
+    assert body == b"1|alice\n2|bob\n"

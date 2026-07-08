@@ -100,8 +100,23 @@ _UNLOAD_QUERY = re.compile(
 _UNLOAD_TO = re.compile(r"\bTO\s+'((?:[^']|'')*)'", re.IGNORECASE)
 
 
-def parse_unload(sql: str) -> tuple[str, str, _Format]:
-    """Pull the inner query, S3 target, and format out of an UNLOAD statement.
+@dataclass(frozen=True)
+class _UnloadOptions:
+    """Redshift ``UNLOAD`` options that control *where/how many* objects are
+    written, as opposed to ``_Format`` which controls the bytes inside them.
+
+    ``parallel`` mirrors Redshift's default of writing one object per slice
+    (``ON``); ``OFF`` forces a single object named exactly as the target, with
+    no slice suffix. ``allow_overwrite`` mirrors Redshift's default of erroring
+    when the target already has objects, unless ``ALLOWOVERWRITE`` is given.
+    """
+
+    parallel: bool
+    allow_overwrite: bool
+
+
+def parse_unload(sql: str) -> tuple[str, str, _Format, _UnloadOptions]:
+    """Pull the inner query, S3 target, format, and options out of an UNLOAD statement.
 
     sqlglot does not model UNLOAD (it falls back to a generic ``Command``), so we
     parse the text directly.
@@ -115,7 +130,15 @@ def parse_unload(sql: str) -> tuple[str, str, _Format]:
     # Everything after the TO clause is where the format/options live; scanning
     # only the tail keeps keywords inside the query or the S3 path from matching.
     options = sql[tm.end() :]
-    return query, target, _format_from_options(options)
+    return query, target, _format_from_options(options), _unload_options_from(options)
+
+
+def _unload_options_from(options: str) -> _UnloadOptions:
+    up = options.upper()
+    parallel_m = re.search(r"\bPARALLEL\s+(ON|OFF|TRUE|FALSE)\b", up)
+    parallel = parallel_m.group(1) not in ("OFF", "FALSE") if parallel_m else True
+    allow_overwrite = bool(re.search(r"\bALLOWOVERWRITE\b", up))
+    return _UnloadOptions(parallel=parallel, allow_overwrite=allow_overwrite)
 
 
 def _format_from_options(options: str) -> _Format:
@@ -143,19 +166,31 @@ def _format_from_options(options: str) -> _Format:
 
 def run_unload(conn: duckdb.DuckDBPyConnection, unload_sql: str) -> None:
     """Execute an UNLOAD: run the inner query and upload the result to S3."""
-    query, target, fmt = parse_unload(unload_sql)
+    query, target, fmt, opts = parse_unload(unload_sql)
     duck_query = sqlglot.transpile(query, read="redshift", write="duckdb")[0]
     bucket, key = _split_s3_uri(target)
+    # PARALLEL ON (the default) names objects <prefix><slice>_part_<n>, one per
+    # slice; a single slice is enough for a mock and COPY finds it by prefix
+    # regardless. PARALLEL OFF writes exactly one object named as the target,
+    # with no suffix.
+    out_key = f"{key}000" if opts.parallel else key
+
+    s3 = _s3_client()
+    if not opts.allow_overwrite:
+        existing = s3.list_objects_v2(Bucket=bucket, Prefix=key).get("Contents", [])
+        if existing:
+            raise RuntimeError(
+                f"UNLOAD destination s3://{bucket}/{key} already exists; "
+                "use ALLOWOVERWRITE to replace it"
+            )
+
     with tempfile.TemporaryDirectory() as d:
         out = Path(d) / "out"
         conn.execute(
             f"COPY ({duck_query}) TO '{_sql_quote(str(out))}' ({fmt.write_options()})"
         )
         body = out.read_bytes()
-    # Redshift names UNLOAD output objects <prefix><slice>_part_<n>; a single
-    # slice is enough for a mock and COPY finds it by prefix regardless.
-    s3 = _s3_client()
-    s3.put_object(Bucket=bucket, Key=f"{key}000", Body=body)
+    s3.put_object(Bucket=bucket, Key=out_key, Body=body)
 
 
 # --- COPY -----------------------------------------------------------------
