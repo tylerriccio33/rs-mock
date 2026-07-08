@@ -12,3 +12,4 @@ wheels/
 .ruff_cache
 .gremlins_cache
 .coverage*
+.tox/
