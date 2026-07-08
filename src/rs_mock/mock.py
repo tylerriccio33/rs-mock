@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import duckdb
 import sqlglot
+from sqlglot import expressions as exp
+
+from rs_mock import _s3
 
 
 class UnimplementedPostgresFeature(Exception):
@@ -13,6 +16,22 @@ class UnimplementedPostgresFeature(Exception):
     AWS "Unsupported PostgreSQL ..." docs). Since this mock stands in for Redshift,
     such SQL must fail loudly here rather than silently succeed on duckdb.
     """
+
+
+def _is_unload(statement: exp.Expression) -> bool:
+    """True if `statement` is an UNLOAD, which sqlglot leaves as a raw Command."""
+    return isinstance(statement, exp.Command) and statement.name.upper() == "UNLOAD"
+
+
+def _unload_text(statement: exp.Command) -> str:
+    """Reconstruct an UNLOAD's original text from its Command node.
+
+    sqlglot does not model UNLOAD; it stores the keyword in `name` and the raw
+    remainder ("('query') TO '...' ...") verbatim in the string expression, so
+    stitching them back yields the source `_s3.parse_unload` expects.
+    """
+    remainder = statement.expression.this if statement.expression else ""
+    return f"UNLOAD {remainder}"
 
 
 class RedshiftMock:
@@ -35,21 +54,26 @@ class RedshiftMock:
         """Transpile Redshift `sql` to duckdb and execute it.
 
         A single string may hold multiple statements; each is transpiled and
-        run in order. Returns the duckdb cursor of the final statement, so
-        callers can `.fetchall()`, `.df()`, `.arrow()`, etc.
+        run in order. `UNLOAD` and `COPY ... FROM 's3://...'` are intercepted and
+        run against S3 via boto3 (see `rs_mock._s3`) rather than transpiled.
+        Returns the duckdb cursor of the final statement, so callers can
+        `.fetchall()`, `.df()`, `.arrow()`, etc.
         """
-        # `transpile` splits multi-statement input and parses with the redshift
-        # dialect; blank input transpiles to a single empty string, so filter
-        # those out. Executing nothing is a user error.
-        statements = [
-            s for s in sqlglot.transpile(sql, read="redshift", write="duckdb") if s
-        ]
+        # `parse` splits multi-statement input with the redshift dialect; blank
+        # input parses to a single `None`, so filter those out. Executing
+        # nothing is a user error.
+        statements = [s for s in sqlglot.parse(sql, read="redshift") if s]
         if not statements:
             raise ValueError("no SQL statement to execute")
 
         result = self._conn
         for statement in statements:
-            result = self._conn.execute(statement)
+            if _is_unload(statement):
+                _s3.run_unload(self._conn, _unload_text(statement))
+            elif _s3.is_s3_copy(statement):
+                _s3.run_copy(self._conn, statement)
+            else:
+                result = self._conn.execute(statement.sql(dialect="duckdb"))
         return result
 
     def close(self) -> None:
