@@ -11,6 +11,7 @@ not yet implemented, so every case below is xfailed until it is.
 """
 
 import pytest
+from pytest_testmap import testmap
 
 from rs_mock import RedshiftMock, UnimplementedPostgresFeature
 
@@ -70,6 +71,7 @@ UNSUPPORTED_FUNCTIONS = {
 @pytest.mark.parametrize(
     "sql", UNSUPPORTED_FUNCTIONS.values(), ids=UNSUPPORTED_FUNCTIONS.keys()
 )
+@testmap(feature="unsupported_detection", kind="integration")
 def test_unsupported_function_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)
@@ -106,6 +108,7 @@ UNSUPPORTED_DATATYPES = {
 @pytest.mark.parametrize(
     "sql", UNSUPPORTED_DATATYPES.values(), ids=UNSUPPORTED_DATATYPES.keys()
 )
+@testmap(feature="unsupported_detection", kind="integration")
 def test_unsupported_datatype_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)
@@ -136,6 +139,7 @@ UNSUPPORTED_FEATURES = {
 @pytest.mark.parametrize(
     "sql", UNSUPPORTED_FEATURES.values(), ids=UNSUPPORTED_FEATURES.keys()
 )
+@testmap(feature="unsupported_detection", kind="integration")
 def test_unsupported_feature_raises(mock: RedshiftMock, sql: str) -> None:
     with pytest.raises(UnimplementedPostgresFeature):
         mock.execute(sql)
