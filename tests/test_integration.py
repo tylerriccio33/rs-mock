@@ -1,13 +1,17 @@
 """Integration tests: end-to-end Redshift SQL transpiled and run on duckdb."""
 
+from pytest_testmap import testmap
+
 from rs_mock import RedshiftMock
 
 
+@testmap(feature="execute", kind="integration")
 def test_regular_select(mock: RedshiftMock) -> None:
     rows = mock.execute("SELECT 1 AS a, 2 AS b").fetchall()
     assert rows == [(1, 2)]
 
 
+@testmap(feature="execute", kind="integration")
 def test_ddl_and_dml_persist_across_calls(mock: RedshiftMock) -> None:
     mock.execute("CREATE TABLE t (id INT, name VARCHAR)")
     mock.execute("INSERT INTO t VALUES (1, 'alice'), (2, 'bob')")
@@ -15,6 +19,7 @@ def test_ddl_and_dml_persist_across_calls(mock: RedshiftMock) -> None:
     assert rows == [(1, "alice"), (2, "bob")]
 
 
+@testmap(feature="execute", kind="integration")
 def test_join(mock: RedshiftMock) -> None:
     mock.execute("CREATE TABLE a (id INT, val INT)")
     mock.execute("CREATE TABLE b (id INT, tag VARCHAR)")
@@ -26,6 +31,7 @@ def test_join(mock: RedshiftMock) -> None:
     assert rows == [(10, "x"), (20, "y")]
 
 
+@testmap(feature="execute", kind="integration")
 def test_cte(mock: RedshiftMock) -> None:
     rows = mock.execute(
         "WITH nums AS (SELECT 1 AS n UNION ALL SELECT 2) SELECT SUM(n) FROM nums"
@@ -33,6 +39,7 @@ def test_cte(mock: RedshiftMock) -> None:
     assert rows == [(3,)]
 
 
+@testmap(feature="execute", kind="integration")
 def test_multiple_statements_in_one_call(mock: RedshiftMock) -> None:
     rows = mock.execute(
         "CREATE TABLE t (id INT); INSERT INTO t VALUES (7); SELECT id FROM t"
@@ -40,6 +47,7 @@ def test_multiple_statements_in_one_call(mock: RedshiftMock) -> None:
     assert rows == [(7,)]
 
 
+@testmap(feature="execute", kind="integration")
 def test_redshift_specific_syntax_is_transpiled(mock: RedshiftMock) -> None:
     # GETDATE() is Redshift-specific; it must be rewritten for duckdb.
     rows = mock.execute("SELECT GETDATE() IS NOT NULL AS ok").fetchall()

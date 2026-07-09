@@ -41,6 +41,11 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+  - repo: https://github.com/tylerriccio33/testmap-pre-commit
+    rev: v0.5.0
+    hooks:
+      - id: testmap
 ci:
   # mutation testing (and the full suite it depends on) is too slow for pre-commit.ci
   skip: [pytest-quick]

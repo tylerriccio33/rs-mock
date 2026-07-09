@@ -834,6 +834,7 @@ dev = [
     { name = "pytest-testmap" },
     { name = "pytest-xdist" },
     { name = "ruff" },
+    { name = "testmap" },
     { name = "tox" },
     { name = "tox-uv" },
 ]
@@ -858,6 +859,7 @@ dev = [
     { name = "pytest-testmap", specifier = ">=0.3.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "ruff", specifier = ">=0.15.20" },
+    { name = "testmap", specifier = ">=0.5.0" },
     { name = "tox", specifier = ">=4.23.2" },
     { name = "tox-uv", specifier = ">=1.16.0" },
 ]

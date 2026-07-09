@@ -2,6 +2,7 @@
 
 from hypothesis import given
 from hypothesis import strategies as st
+from pytest_testmap import testmap
 
 from rs_mock import RedshiftMock
 
@@ -11,6 +12,7 @@ from rs_mock import RedshiftMock
 int32 = st.integers(min_value=-(2**31), max_value=2**31 - 1)
 
 
+@testmap(feature="execute", kind="property")
 @given(a=int32, b=int32)
 def test_select_literals_roundtrip(a: int, b: int) -> None:
     # Whatever integers we select back out should equal what we put in.
@@ -22,6 +24,7 @@ def test_select_literals_roundtrip(a: int, b: int) -> None:
         mock.close()
 
 
+@testmap(feature="execute", kind="property")
 @given(values=st.lists(int32, min_size=1, max_size=20))
 def test_inserted_rows_come_back_sorted(values: list[int]) -> None:
     # Insert an arbitrary set of ints, read them back ordered, and the result

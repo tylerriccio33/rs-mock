@@ -10,6 +10,7 @@ from collections.abc import Iterator
 import boto3
 import pytest
 from moto import mock_aws
+from pytest_testmap import testmap
 
 from rs_mock import RedshiftMock
 
@@ -42,6 +43,7 @@ def _keys(s3: object, prefix: str) -> list[str]:
     ]
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_writes_object_to_s3(rs: RedshiftMock, s3: object) -> None:
     rs.execute(
         "UNLOAD ('select id, name from users order by id') "
@@ -54,6 +56,7 @@ def test_unload_writes_object_to_s3(rs: RedshiftMock, s3: object) -> None:
     assert body == b"id,name\n1,alice\n2,bob\n"
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_default_format_is_pipe_delimited_without_header(
     rs: RedshiftMock, s3: object
 ) -> None:
@@ -65,6 +68,7 @@ def test_unload_default_format_is_pipe_delimited_without_header(
     assert body == b"1|alice\n2|bob\n"
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_transpiles_redshift_syntax_in_inner_query(
     rs: RedshiftMock, s3: object
 ) -> None:
@@ -86,6 +90,7 @@ def test_unload_transpiles_redshift_syntax_in_inner_query(
     ],
     ids=["csv", "parquet", "text"],
 )
+@testmap(feature="s3", kind="integration")
 def test_unload_then_copy_roundtrips(
     rs: RedshiftMock, unload_opts: str, copy_opts: str
 ) -> None:
@@ -99,6 +104,7 @@ def test_unload_then_copy_roundtrips(
     assert rows == [(1, "alice"), (2, "bob")]
 
 
+@testmap(feature="s3", kind="integration")
 def test_copy_respects_explicit_column_list(rs: RedshiftMock, s3: object) -> None:
     s3.put_object(Bucket=BUCKET, Key="cols/f000", Body=b"bob|2\nalice|1\n")
     rs.execute("CREATE TABLE loaded (id INT, name VARCHAR)")
@@ -108,6 +114,7 @@ def test_copy_respects_explicit_column_list(rs: RedshiftMock, s3: object) -> Non
     assert rows == [(1, "alice"), (2, "bob")]
 
 
+@testmap(feature="s3", kind="integration")
 def test_copy_concatenates_all_objects_under_prefix(
     rs: RedshiftMock, s3: object
 ) -> None:
@@ -119,12 +126,14 @@ def test_copy_concatenates_all_objects_under_prefix(
     assert rows == [(1, "alice"), (2, "bob")]
 
 
+@testmap(feature="s3", kind="integration")
 def test_copy_from_empty_prefix_loads_nothing(rs: RedshiftMock) -> None:
     rs.execute("CREATE TABLE loaded (id INT, name VARCHAR)")
     rs.execute(f"COPY loaded FROM 's3://{BUCKET}/nothing/' IAM_ROLE 'arn:...'")
     assert rs.execute("SELECT count(*) FROM loaded").fetchall() == [(0,)]
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_parallel_off_writes_single_object_with_no_suffix(
     rs: RedshiftMock, s3: object
 ) -> None:
@@ -135,6 +144,7 @@ def test_unload_parallel_off_writes_single_object_with_no_suffix(
     assert _keys(s3, "single/") == ["single/out"]
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_parallel_on_is_the_default(rs: RedshiftMock, s3: object) -> None:
     rs.execute(
         "UNLOAD ('select id, name from users order by id') "
@@ -143,6 +153,7 @@ def test_unload_parallel_on_is_the_default(rs: RedshiftMock, s3: object) -> None
     assert _keys(s3, "par/") == ["par/out_000"]
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_errors_on_existing_target_without_allowoverwrite(
     rs: RedshiftMock, s3: object
 ) -> None:
@@ -154,6 +165,7 @@ def test_unload_errors_on_existing_target_without_allowoverwrite(
         )
 
 
+@testmap(feature="s3", kind="integration")
 def test_unload_allowoverwrite_replaces_existing_target(
     rs: RedshiftMock, s3: object
 ) -> None:

@@ -33,9 +33,18 @@ dev = [
     "pytest-testmap>=0.3.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.15.20",
+    "testmap>=0.5.0",
     "tox>=4.23.2",
     "tox-uv>=1.16.0",
 ]
+
+[tool.testmap]
+kinds = ["unit", "integration", "property"]
+required = ["unit", "integration"]
+
+[tool.testmap.features]
+s3 = { exclude = ["unit", "property"] }
+unsupported_detection = { exclude = ["unit", "property"] }
 
 [tool.tox]
 env_list = ["3.12", "3.13", "3.14"]
