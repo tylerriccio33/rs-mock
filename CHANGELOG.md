@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/tylerriccio33/rs-mock/compare/rs-mock-v0.2.0...rs-mock-v0.3.0) (2026-07-11)
+
+
+### Features
+
+* add psycopg2 compatibility layer ([#12](https://github.com/tylerriccio33/rs-mock/issues/12)) ([396fba2](https://github.com/tylerriccio33/rs-mock/commit/396fba2d99776cfa3b47f32fee7a86476c7f40a7))
+
 ## [0.2.0](https://github.com/tylerriccio33/rs-mock/compare/rs-mock-v0.1.0...rs-mock-v0.2.0) (2026-07-08)
 
 
