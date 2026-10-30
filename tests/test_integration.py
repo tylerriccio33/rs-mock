@@ -52,3 +52,13 @@ def test_redshift_specific_syntax_is_transpiled(mock: RedshiftMock) -> None:
     # GETDATE() is Redshift-specific; it must be rewritten for duckdb.
     rows = mock.execute("SELECT GETDATE() IS NOT NULL AS ok").fetchall()
     assert rows == [(True,)]
+
+
+@testmap(feature="execute", kind="integration")
+def test_regexp_replace_replaces_every_match(mock: RedshiftMock) -> None:
+    rows = mock.execute(
+        "SELECT REGEXP_REPLACE('00-000-0001', '[^0-9]', ''),"
+        " REGEXP_REPLACE('a-b-c', '-', '', 2),"
+        " REGEXP_REPLACE('AaA', 'a', 'x', 1, 'i')"
+    ).fetchall()
+    assert rows == [("000000001", "abc", "xxx")]
