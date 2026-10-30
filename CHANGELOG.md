@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/tylerriccio33/rs-mock/compare/rs-mock-v0.3.0...rs-mock-v0.3.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* REGEXP_REPLACE replaces every match, as Redshift does ([#14](https://github.com/tylerriccio33/rs-mock/issues/14)) ([d0c1322](https://github.com/tylerriccio33/rs-mock/commit/d0c13225a4b5c9b9dc650c56de6ae4fe620ba804))
+
 ## [0.3.0](https://github.com/tylerriccio33/rs-mock/compare/rs-mock-v0.2.0...rs-mock-v0.3.0) (2026-07-11)
 
 
