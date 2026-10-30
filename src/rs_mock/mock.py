@@ -73,6 +73,15 @@ class RedshiftMock:
             elif _s3.is_s3_copy(statement):
                 _s3.run_copy(self._conn, statement)
             else:
+                # Redshift's REGEXP_REPLACE replaces every match, but sqlglot reads
+                # it as a single replace; duckdb replaces all only with the 'g' flag.
+                for node in statement.find_all(exp.RegexpReplace):
+                    flags = node.args.get("modifiers")
+                    node.set(
+                        "modifiers",
+                        exp.Literal.string(f"{flags.name if flags else ''}g"),
+                    )
+                    node.set("single_replace", None)
                 result = self._conn.execute(statement.sql(dialect="duckdb"))
         return result
 
